@@ -2,11 +2,12 @@ import RPi.GPIO as GPIO
 from time import sleep
 import PySimpleGUI as sg
 
-layout = [  [sg.Text("Motor Controller", font=("Arial Light", 20, "bold"), justification="center", text_color="#125390", size=(64,1))],
+layout = [  [sg.Text("PiKart Controller", font=("Arial Light", 20, "bold"), justification="center", text_color="#125390", size=(64,1))],
             [sg.Text(" ")],
-            [sg.Exit(button_color=('white', 'firebrick'), key='Exit'), sg.Button("Forward", key="_forward_")],
-            [sg.Button("Stop", key="_stop_"), sg.Button("backwards", key="_backward_")],
-            [sg.Button("Turn left", key="_left_"), sg.Button("turn right", key="_right_")]
+            [sg.Button("Forward", key="_forward_"), sg.Button("backwards", key="_backward_")],
+            [sg.Button("Turn left", key="_left_"), sg.Button("turn right", key="_right_")],
+            [sg.Button("Stop", key="_stop_"), sg.Exit(button_color=('white', 'firebrick'), key='Exit')]
+
          ]
 
 window = sg.Window("PiKart - Controller", layout, resizable=False, size=(600, 190))
@@ -143,12 +144,3 @@ try:
             control1.turn_right()
 except:
     destroy()
-
-
-
-'''if __name__ == '__main__':     # Program start from here
-    setup()
-    try:
-        loop()
-    except KeyboardInterrupt:
-        destroy()'''
