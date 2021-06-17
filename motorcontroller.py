@@ -1,16 +1,22 @@
 import RPi.GPIO as GPIO
 from time import sleep
 import PySimpleGUI as sg
+from picamera.array import PiRGBArray
+from picamera import PiCamera
+import time
+import cv2 as cv
+import random
 
 layout = [  [sg.Text("PiKart Controller", font=("Arial Light", 20, "bold"), justification="center", text_color="#125390", size=(64,1))],
             [sg.Text(" ")],
+            [sg.Image("imgtest.png", key="_img_")],
             [sg.Button("Forward", key="_forward_"), sg.Button("backwards", key="_backward_")],
             [sg.Button("Turn left", key="_left_"), sg.Button("turn right", key="_right_")],
             [sg.Button("Stop", key="_stop_"), sg.Exit(button_color=('white', 'firebrick'), key='Exit')]
 
          ]
 
-window = sg.Window("PiKart - Controller", layout, resizable=False, size=(600, 190))
+window = sg.Window("PiKart - Controller", layout, resizable=True, size=(600, 190))
 
 # Pins for Motor Driver Inputs
 class Controller:
@@ -104,23 +110,35 @@ def destroy():
     control1 = Controller(MotorA1A, MotorA1B, MotorB1A, MotorB1B)
     control2 = Controller(MotorA1A, MotorA1B, 0, 0)
     control1.stopall()
+    print("destroy called")
     control2.stopA()
     GPIO.cleanup()
 
 try:
+    camera = PiCamera()
+    rawCapture = PiRGBArray(camera)
+    time.sleep(0.1)
+    MotorA1A = 38
+    MotorA1B = 40
+    MotorB1A = 35
+    MotorB1B = 37
+    Motor2A1A = 7
+    Motor2A1B = 8
+    setup()
+    control1 = Controller(MotorA1A, MotorA1B, MotorB1A, MotorB1B)
+    control2 = Controller(MotorA1A, MotorA1B, 0, 0)
     while True:
-        MotorA1A = 38
-        MotorA1B = 40
-        MotorB1A = 35
-        MotorB1B = 37
-        Motor2A1A = 7
-        Motor2A1B = 8
-        setup()
-        control1 = Controller(MotorA1A, MotorA1B, MotorB1A, MotorB1B)
-        control2 = Controller(MotorA1A, MotorA1B, 0, 0)
-        event, values = window.Read()
+        event, values = window.Read(timeout=1)
+        camera.capture(rawCapture, format="bgr")
+        image = rawCapture.array
+        rawCapture.truncate(0)
+        #rawCapture.close()
+        imgbytes = cv.imencode('.png', image)[1].tobytes()
+        window['_img_'].update(data=imgbytes)
+        print("changed img" + str(random.randint(1,99)))
         if event is None or event == 'Exit':
             control1.stopall()
+            print("event none/exit")
             control2.stopA()
             GPIO.cleanup()
             break
@@ -134,6 +152,7 @@ try:
 
         elif event == "_stop_":
             control1.stopall()
+            print("stop event sent")
             control2.stopA()
             stopA()
         elif event == "_left_":
@@ -142,5 +161,6 @@ try:
         elif event == "_right_":
             stopA()
             control1.turn_right()
-except:
+except Exception as e:
     destroy()
+    print(e)
