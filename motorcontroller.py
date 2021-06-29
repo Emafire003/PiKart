@@ -5,18 +5,21 @@ from picamera.array import PiRGBArray
 from picamera import PiCamera
 import time
 import cv2 as cv
-import random
 
-layout = [  [sg.Text("PiKart Controller", font=("Arial Light", 20, "bold"), justification="center", text_color="#125390", size=(64,1))],
-            [sg.Text(" ")],
-            [sg.Image("imgtest.png", key="_img_")],
-            [sg.Button("Forward", key="_forward_"), sg.Button("backwards", key="_backward_")],
-            [sg.Button("Turn left", key="_left_"), sg.Button("turn right", key="_right_")],
-            [sg.Button("Stop", key="_stop_"), sg.Exit(button_color=('white', 'firebrick'), key='Exit')]
+img_layout = [[sg.Image("imgtest.png", key="_img_")]]
 
+buttons_layout = [
+                    [sg.Text(" ")],
+                    [sg.Button("Forward", key="_forward_"), sg.Button("backwards", key="_backward_")],
+                    [sg.Button("Turn left", key="_left_"), sg.Button("turn right", key="_right_")],
+                    [sg.Button("Stop", key="_stop_"), sg.Exit(button_color=('white', 'firebrick'), key='Exit')]
+                 ]
+
+layout = [  [sg.Text("PiKart Controller", font=("Arial Light", 20, "bold"), justification="center", text_color="#125390", size=(48,1))],
+            [sg.Column(img_layout, element_justification='c'), sg.Column(buttons_layout, element_justification='c')]
          ]
 
-window = sg.Window("PiKart - Controller", layout, resizable=True, size=(600, 190))
+window = sg.Window("PiKart - Controller", layout, resizable=True, size=(500, 220))
 
 # Pins for Motor Driver Inputs
 class Controller:
@@ -117,6 +120,9 @@ def destroy():
 try:
     camera = PiCamera()
     rawCapture = PiRGBArray(camera)
+    camera.resolution = (224, 144)
+    camera.start_preview()
+
     time.sleep(0.1)
     MotorA1A = 38
     MotorA1B = 40
@@ -132,10 +138,8 @@ try:
         camera.capture(rawCapture, format="bgr")
         image = rawCapture.array
         rawCapture.truncate(0)
-        #rawCapture.close()
         imgbytes = cv.imencode('.png', image)[1].tobytes()
         window['_img_'].update(data=imgbytes)
-        print("changed img" + str(random.randint(1,99)))
         if event is None or event == 'Exit':
             control1.stopall()
             print("event none/exit")
