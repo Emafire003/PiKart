@@ -115,3 +115,5 @@ dmypy.json
 
 #Repospecific
 test.py
+servocontroller.py
+servotest.py

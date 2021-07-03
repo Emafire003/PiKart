@@ -12,6 +12,7 @@ buttons_layout = [
                     [sg.Text(" ")],
                     [sg.Button("Forward", key="_forward_"), sg.Button("backwards", key="_backward_")],
                     [sg.Button("Turn left", key="_left_"), sg.Button("turn right", key="_right_")],
+                    [sg.Slider(range=(2,12), key="_SLIDER_", default_value=8, size=(15,10), orientation='horizontal',font=('Helvetica', 12))],
                     [sg.Button("Stop", key="_stop_"), sg.Exit(button_color=('white', 'firebrick'), key='Exit')]
                  ]
 
@@ -36,6 +37,7 @@ class Controller:
         GPIO.setup(MotorA1B,GPIO.OUT)
         GPIO.setup(MotorB1A,GPIO.OUT)  # All pins as Outputs
         GPIO.setup(MotorB1B,GPIO.OUT)
+        GPIO.setup(12,GPIO.OUT) #Servo motor up
 
     def forwardMA(self):
         GPIO.output(MotorA1A,GPIO.HIGH)
@@ -88,19 +90,21 @@ class Controller:
 def setup():
     GPIO.setwarnings(False)
     GPIO.setmode(GPIO.BOARD)              # GPIO Numbering
-    GPIO.setup(7,GPIO.OUT)  # All pins as Outputs
-    GPIO.setup(8,GPIO.OUT)
+    GPIO.setup(33,GPIO.OUT)  # All pins as Outputs
+    GPIO.setup(31,GPIO.OUT)
+    GPIO.setup(12,GPIO.OUT)
 def stopA():
-    GPIO.output(7,GPIO.LOW)
-    GPIO.output(8,GPIO.LOW)
+    GPIO.output(33,GPIO.LOW)
+    GPIO.output(31,GPIO.LOW)
     print("Stopped A motor")
 def forwardMA():
-    GPIO.output(7,GPIO.HIGH)
-    GPIO.output(8,GPIO.LOW)
+    print("Trying motor A2")
+    GPIO.output(33,GPIO.LOW)
+    GPIO.output(31,GPIO.HIGH)
     print("Going forwards with Motor A2")
 def backwardMA():
-    GPIO.output(7,GPIO.HIGH)
-    GPIO.output(8,GPIO.LOW)
+    GPIO.output(33,GPIO.HIGH)
+    GPIO.output(31,GPIO.LOW)
     print("Going forwards with Motor A")
 
 def destroy():
@@ -108,8 +112,8 @@ def destroy():
     MotorA1B = 40
     MotorB1A = 35
     MotorB1B = 37
-    Motor2A1A = 8
-    Motor2A1B = 7
+    Motor2A1A = 33
+    Motor2A1B = 31
     control1 = Controller(MotorA1A, MotorA1B, MotorB1A, MotorB1B)
     control2 = Controller(MotorA1A, MotorA1B, 0, 0)
     control1.stopall()
@@ -128,9 +132,12 @@ try:
     MotorA1B = 40
     MotorB1A = 35
     MotorB1B = 37
-    Motor2A1A = 7
-    Motor2A1B = 8
-    setup()
+    Motor2A1A = 33
+    Motor2A1B = 31
+    setup() #TODO may be the wrong one, needing to be Controller.setup() maybe
+    p=GPIO.PWM(12,50)
+
+    p.start(8)
     control1 = Controller(MotorA1A, MotorA1B, MotorB1A, MotorB1B)
     control2 = Controller(MotorA1A, MotorA1B, 0, 0)
     while True:
@@ -153,6 +160,7 @@ try:
         elif event == "_backward_":
             control1.backward()
             control2.backwardMA()
+            backwardMA()
 
         elif event == "_stop_":
             control1.stopall()
@@ -165,6 +173,17 @@ try:
         elif event == "_right_":
             stopA()
             control1.turn_right()
+
+        slider_value = values["_SLIDER_"]
+        if(slider_value < 2.5):
+            print("less than 2.5")
+            slider_value = 2.5
+        p.ChangeDutyCycle(float(slider_value))
+    window.close()
+    p.ChangeDutyCycle(8)
+    p.stop()
+    destroy()
+
 except Exception as e:
     destroy()
     print(e)
